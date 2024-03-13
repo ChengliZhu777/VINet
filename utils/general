@@ -1,3 +1,5 @@
+import os
+import glob
 import logging
 import argparse
 
@@ -14,7 +16,7 @@ def set_logging(rank=-1):
 def get_options(hyp_path='hyp/oi_hyp.yaml',
                 data_path='data/VINet.yaml',
                 model_cfg='models/cfg/VINet.yaml',
-                resume=False, project='VINet-Runs', name='Train'):
+                resume=False, project='Runs', name='Train-1'):
 
     parser = argparse.ArgumentParser(description='VINet Train/Test Options')
     parser.add_argument('--hyp', type=str, default=hyp_path, help='Required hyper-parameters, i.e, batch-size.')
@@ -26,3 +28,11 @@ def get_options(hyp_path='hyp/oi_hyp.yaml',
     parser.add_argument('--name', default=name, help='save to project/name')
 
     return parser.parse_args()
+
+
+def get_latest_run(search_dir='.'):
+    last_ckpt_list = glob.glob(f'{search_dir}/**/last*.pt', recursive=True)
+    if last_ckpt_list:
+        return max(last_ckpt_list, key=os.path.getctime)
+    else:
+        raise FileNotFoundError("Error: don't find checkpoint file for resuming train.")
