@@ -1,4 +1,6 @@
 import os
+import re
+import yaml
 import glob
 import logging
 import argparse
@@ -15,7 +17,7 @@ def set_logging(rank=-1):
                         level=logging.INFO if rank in [-1, 0] else logging.WARN)
 
 
-def get_options(hyp_path='hyp/oi_hyp.yaml',
+def get_options(hyp_path='hyp/VINet.base.yaml',
                 data_path='data/VINet.yaml',
                 model_cfg='models/cfg/VINet.yaml',
                 resume=False, project='runs', name='Train-1'):
@@ -52,6 +54,20 @@ def check_filepath(path):
         return files[0]
 
 
+def increment_path(path, exist_ok=True, separator='-'):
+    path = Path(path)
+    if (path.exists() and exist_ok) or (not path.exists()):
+        return path.absolute()
+    else:
+        paths = glob.glob(f'{path.parent}/{path.stem.split(separator)[0]}{separator}*')
+        match_pattern = rf"%s{separator}(\d+)" % path.stem.split(separator)[0]
+
+        matches = [re.search(match_pattern, p) for p in paths]
+        i = [int(m.groups()[0]) for m in matches if m]
+
+        return f"{path.parent}/{path.stem.split(separator)[0]}{separator}{max(i) + 1 if i else 2}"
+
+
 def colorstr(*inputs):
     *args, string = inputs if len(inputs) > 1 else ('blue', 'bold', inputs[0])  # color arguments, string
     colors = {'black': '\033[30m',  # basic colors
@@ -74,3 +90,11 @@ def colorstr(*inputs):
               'bold': '\033[1m',
               'underline': '\033[4m'}
     return ''.join(colors[x] for x in args) + f'{string}' + colors['end']
+
+
+def load_file(file_path):
+    try:
+        with open(file_path) as f:
+            return yaml.load(f, yaml.SafeLoader)
+    except Exception as e:
+        raise Exception(f'Error: fail to load data from {file_path}. \n {e}')
