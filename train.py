@@ -4,6 +4,7 @@ import argparse
 
 from pathlib import Path
 
+from utils.torch_utils import select_torch_device
 from utils.general import set_logging, get_options, get_latest_run, check_filepath, \
     increment_path, colorstr, load_file
 
