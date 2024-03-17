@@ -4,14 +4,18 @@ import argparse
 
 from pathlib import Path
 
-from utils.general import set_logging, get_options, check_filepath, colorstr
+from utils.general import set_logging, get_options, get_latest_run, check_filepath, \
+    increment_path, colorstr, load_file
 
 
 logger = logging.getLogger(__name__)
 
 
 def train(train_opts):
-    pass
+
+    hypers, model_cfg = load_file(train_opts.hyp), load_file(train_opts.model_cfg)
+    device = select_torch_device(train_opts.device, batch_size=hypers['batch_size'],
+                                 prefix=colorstr('device: '))
 
 
 if __name__ == '__main__':
