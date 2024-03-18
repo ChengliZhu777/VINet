@@ -15,8 +15,18 @@ logger = logging.getLogger(__name__)
 def train(train_opts):
 
     hypers, model_cfg = load_file(train_opts.hyp), load_file(train_opts.model_cfg)
-    device = select_torch_device(train_opts.device, batch_size=hypers['batch_size'],
-                                 prefix=colorstr('device: '))
+    logger.info(colorstr('Hyper-parameters: ') + ', '.join(f'{k}={v}' for k, v in hypers.items()))
+
+    device = select_torch_device(hypers['device'], batch_size=hypers['batch_size'],
+                                 prefix=colorstr('Device: '))
+
+    logger.info(f"{colorstr('Tensorboard: ')}Start with 'tensorboard --logdir {train_opts.project}', "
+                f"view at http://localhost:6006/")
+    writer = SummaryWriter(train_opts.save_dir)
+
+    save_dir, epochs, batch_size = Path(train_opts.save_dir), hypers['epochs'], hypers['batch_size']
+    weight_dir = save_dir / 'weights'
+    last_weight, best_weight = weight_dir / 'last.pth', weight_dir / 'best.pth'
 
 
 if __name__ == '__main__':
