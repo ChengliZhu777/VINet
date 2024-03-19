@@ -1,5 +1,9 @@
 import torch
+import random
 import logging
+
+import numpy as np
+import torch.backends.cudnn as cudnn
 
 logger = logging.getLogger(__name__)
 
@@ -39,4 +43,15 @@ def select_torch_device(device='', batch_size=None, prefix=''):
         return torch.device(available_device)
     else:
         raise ValueError("Error: torch device must be specified, e.g, 'cpu', '0', or '0, 1, 2'.")
-      
+
+
+def init_seeds(seed=0):
+    random.seed(seed)
+    np.random.seed(seed)
+    init_torch_seeds(seed)
+
+
+def init_torch_seeds(seed=0):
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    cudnn.benchmark, cudnn.deterministic = False, True  # using default conv, more reproducible
