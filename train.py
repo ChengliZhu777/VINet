@@ -3,8 +3,9 @@ import logging
 import argparse
 
 from pathlib import Path
+from torch.utils.tensorboard import SummaryWriter
 
-from utils.torch_utils import select_torch_device
+from utils.torch_utils import select_torch_device, init_seeds
 from utils.general import set_logging, get_options, get_latest_run, check_filepath, \
     increment_path, colorstr, load_file
 
@@ -14,19 +15,40 @@ logger = logging.getLogger(__name__)
 
 def train(train_opts):
 
-    hypers, model_cfg = load_file(train_opts.hyp), load_file(train_opts.model_cfg)
+    hypers, model_cfg, data_dict = \
+        load_file(train_opts.hyp), load_file(train_opts.model_cfg), load_file(train_opts.data)
     logger.info(colorstr('Hyper-parameters: ') + ', '.join(f'{k}={v}' for k, v in hypers.items()))
 
     device = select_torch_device(hypers['device'], batch_size=hypers['batch_size'],
                                  prefix=colorstr('Device: '))
 
+    save_dir, epochs, batch_size = Path(train_opts.save_dir), hypers['epochs'], hypers['batch_size']
+    weight_dir = save_dir / 'weights'
+    last_weight, best_weight = weight_dir / 'last.pth', weight_dir / 'best.pth'
+
+    if not train_opts.resume:
+        init_seeds(666)
+
+        save_dir.mkdir(parents=True, exist_ok=False)
+        weight_dir.mkdir(parents=True, exist_ok=False)
+
+        with open(save_dir / 'opt.yaml', 'w') as f1:
+            yaml.dump(vars(train_opts), f1, sort_keys=False)
+        with open(save_dir / 'hyp.yaml', 'w') as f1:
+            yaml.dump(hypers, sort_keys=False)
+        with open(save_dir / 'model.yaml', 'w') as f1:
+            yaml.dump(model_cfg, sort_keys=False)
+
     logger.info(f"{colorstr('Tensorboard: ')}Start with 'tensorboard --logdir {train_opts.project}', "
                 f"view at http://localhost:6006/")
     writer = SummaryWriter(train_opts.save_dir)
 
-    save_dir, epochs, batch_size = Path(train_opts.save_dir), hypers['epochs'], hypers['batch_size']
-    weight_dir = save_dir / 'weights'
-    last_weight, best_weight = weight_dir / 'last.pth', weight_dir / 'best.pth'
+    results_writer = open(str(save_dir / 'record.txt'), 'a+', encoding='utf-8')
+
+    train_loader, train_dataset, standard_char2image, standard_char2rot_image = \
+        create_dataloader(data_dict['train'], data_dict['character'], workers=hypers['workers'],
+                          image_width=256, image_height=32, batch_size=batch_size, is_train=True,
+                          standard_char_path=data_dict['standard_char'], prefix=colorstr('Train-dataset'))
 
 
 if __name__ == '__main__':
