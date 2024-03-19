@@ -1,2 +1,5 @@
-deivce: '0'
+device: '0'
+workers: 0
 batch_size: 64
+image_width: 256
+image_height: 32
