@@ -1,9 +1,13 @@
+import os
 import torch
 import random
 import logging
 
 import numpy as np
+import torch.distributed as torch_dist
 import torch.backends.cudnn as cudnn
+
+from contextlib import contextmanager
 
 logger = logging.getLogger(__name__)
 
@@ -55,3 +59,13 @@ def init_torch_seeds(seed=0):
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
     cudnn.benchmark, cudnn.deterministic = False, True  # using default conv, more reproducible
+
+
+@contextmanager
+def torch_distributed_zero_first(local_rank: int):
+    if local_rank not in [-1, 0]:
+        torch_dist.barrier()
+    yield
+    if local_rank == 0:
+        torch_dist.barrier()
+        
