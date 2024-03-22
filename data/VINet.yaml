@@ -1,1 +1,13 @@
+train:
+  Fudan: ./data/fudan/scene_train
+
+valid:
+  Fudan: ./data/fudan/scene_test
+
+Vertical:
+  VCTR: ./data/VCTR_test
+
+standard_char: ./data/SIMSUN_Benchmark_Char
+
+character: ./data/characters.txt
 
