@@ -50,7 +50,16 @@ def train(train_opts):
                           image_width=256, image_height=32, batch_size=batch_size, is_train=True,
                           standard_char_path=data_dict['standard_char'], prefix=colorstr('Train-dataset'))
 
+    valid_loader, valid_dataset = create_dataloader(data_list['valid'], data_list['character'],
+                                                    workers=hypers['workers'], image_width=image_height,
+                                                    image_height=image_width, batch_size=batch_size, is_train=False,
+                                                    prefix=colorstr('Valid-dataset'))
 
+    vertical_loader, vertical_dataset = create_dataloader(data_list['Vertical'], data_list['character'],
+                                                          workers=hypers['workers'], image_width=image_width,
+                                                          image_height=image_height, batch_size=batch_size,
+                                                          is_train=False, prefix=colorstr('Vertical-dataset'))
+    
 if __name__ == '__main__':
     set_logging(-1)
 
