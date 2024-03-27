@@ -8,6 +8,3 @@ Vertical:
   VCTR: ./data/VCTR_test
 
 standard_char: ./data/SIMSUN_Benchmark_Char
-
-character: ./data/characters.txt
-
