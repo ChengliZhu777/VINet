@@ -19,4 +19,12 @@ def fullwidth_to_halfwidth(string):
     half_string = ''
     for c in string:
         inside_code = ord(c)
-      
+
+        if inside_code == 12288:  # full-width space >> half-width space
+            inside_code = 32
+        elif 65281 <= inside_code <= 65374:
+            inside_code -= 65248
+        half_string += chr(inside_code)
+
+    return half_string
+    
