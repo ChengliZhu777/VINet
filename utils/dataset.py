@@ -56,6 +56,26 @@ class LoadImageAndLabels(Dataset):
             label = str(txn.get(label_name.encode()).decode('utf-8'))
 
             label = fullwidth_to_halfwidth(label)
+            label += '$'
+            label = label.lower()
+
+        actual_width, actual_height = image.size
+        if actual_width * 1.5 >= actual_height:
+            vert_mark, org2horiz = False, False
+        else:
+            vert_mark, org2horiz = True, True
+
+        image = self.resize_image(image, is_vert=vert_mark, is_rotate=org2horiz)
+        label_length, label_ids = self.convert(label)
+
+        return image, label, label_length, label_ids, self.char2id['END'], int(vert_mark)
+
+    def resize_image(self, image, is_vert, is_rotate):
+
+        if is_vert:
+            image = image.transpose(Image.ROTATE_90)  # counterclockwise
+
+        image = image.resize((self.target_width, self.target_height), self.interpolation)
       
 def create_dataloader(paths, base_character, workers, image_width, image_height, batch_size, is_train=False,
                       standard_char_path=None, prefix='Loading Data', rank=-1):
@@ -64,3 +84,5 @@ def create_dataloader(paths, base_character, workers, image_width, image_height,
         for dataset_format, dataset_path in paths.items():
             datasets.append(LoadImageAndLabels(dataset_path, base_character,
                                                image_width, image_height, prefix=prefix))              
+
+
