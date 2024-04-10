@@ -8,7 +8,7 @@ from torch.utils.tensorboard import SummaryWriter
 from utils.torch_utils import select_torch_device, init_seeds
 from utils.general import set_logging, get_options, get_latest_run, check_filepath, \
     increment_path, colorstr, load_file
-
+from utils.dataset import load_char_table, create_dataloader, get_standard_char_image
 
 logger = logging.getLogger(__name__)
 
@@ -45,20 +45,22 @@ def train(train_opts):
 
     results_writer = open(str(save_dir / 'record.txt'), 'a+', encoding='utf-8')
 
-    train_loader, train_dataset, standard_char2image, standard_char2rot_image = \
-        create_dataloader(data_dict['train'], data_dict['character'], workers=hypers['workers'],
-                          image_width=256, image_height=32, batch_size=batch_size, is_train=True,
-                          standard_char_path=data_dict['standard_char'], prefix=colorstr('Train-dataset'))
+    char_table = load_char_table(train_opts.data_char)
+    train_loader, train_dataset = create_dataloader(data_list['train'], image_width=image_width,
+                                                    image_height=image_height, batch_size=batch_size,
+                                                    char_table=char_table, workers=hypers['workers'],
+                                                    is_train=True, prefix=colorstr('Train-dataset'))
 
-    valid_loader, valid_dataset = create_dataloader(data_list['valid'], workers=hypers['workers'],
-                                                    image_width=image_width, image_height=image_height,
-                                                    batch_size=batch_size, is_train=False, char_table=char_table,
-                                                    prefix=colorstr('Valid-dataset'))
+    valid_loader, valid_dataset = create_dataloader(data_list['valid'], image_width=image_width,
+                                                    image_height=image_height, batch_size=batch_size,
+                                                    char_table=char_table, workers=hypers['workers'],
+                                                    is_train=False, prefix=colorstr('Valid-dataset'))
 
-    vertical_loader, vertical_dataset = create_dataloader(data_list['Vertical'], workers=hypers['workers'],
-                                                          image_width=image_width, image_height=image_height,
-                                                          batch_size=batch_size, char_table=char_table,
+    vertical_loader, vertical_dataset = create_dataloader(data_list['Vertical'], image_width=image_width,
+                                                          image_height=image_height, batch_size=batch_size,
+                                                          char_table=char_table, workers=hypers['workers'],
                                                           is_train=False, prefix=colorstr('Vertical-dataset'))
+    desirable_reconstructed_image = get_standard_char_image(data_list['standard_char'], char_table, image_height)
     
 if __name__ == '__main__':
     set_logging(-1)
