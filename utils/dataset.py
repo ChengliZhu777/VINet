@@ -117,4 +117,16 @@ class LoadImageAndLabels(Dataset):
 
         return images, labels, label_length, torch.from_numpy(_label_ids).long(), \
             torch.from_numpy(np.array(label_ids_merge)).long(), vert_marks, vert_marks_merge
-        
+
+
+def get_standard_char_image(path, char_table, image_size):
+    standard_char_images = {}
+    dataset = LoadImageAndLabels(path, char_table, image_width=image_size, image_height=image_size)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0,
+                                             collate_fn=LoadImageAndLabels.collate_fn)
+    for _, data in enumerate(dataloader):
+        image, label, _, _, _, _, _ = data
+        standard_char_images[label[0][0]] = image
+
+    return standard_char_images
+    
