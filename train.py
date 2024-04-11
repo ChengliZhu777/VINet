@@ -61,7 +61,13 @@ def train(train_opts):
                                                           char_table=char_table, workers=hypers['workers'],
                                                           is_train=False, prefix=colorstr('Vertical-dataset'))
     desirable_reconstructed_image = get_standard_char_image(data_list['standard_char'], char_table, image_height)
-    
+
+    char_table_size, epoch_iter = train_dataset.datasets[0].get_char_table_size() + 1, len(train_loader)
+    model_cfg['model']['decoder']['config']['input_dimension'] = char_table_size
+
+    model = nn.DataParallel(build_model(model_cfg['model']), device_ids=[0])
+
+
 if __name__ == '__main__':
     set_logging(-1)
 
