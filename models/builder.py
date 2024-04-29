@@ -11,7 +11,7 @@ def build_model(cfg):
 
     if cfg['type'] in ['VINet', 'OIDecoder']:
         return models.__dict__[cfg['type']](**model_params)
-    elif cfg['type'] in ['ResNet']:
+    elif cfg['type'] in ['VEBackbone']:
         return models.backbone.__dict__[cfg['type']](**model_params)
     else:
         raise KeyError
