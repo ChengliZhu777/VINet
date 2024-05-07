@@ -1,0 +1,10 @@
+model:
+  type: 'VINet'
+  backbone:
+    type: 'VEBackbone'
+    config:
+      input_dimension: 3
+      structure:
+        [[-1, 1, Conv, [64, 3, 1, 1, 1, True, True, 'ReLU-inplace']],
+        ]
+        
