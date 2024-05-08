@@ -32,4 +32,14 @@ class Conv(nn.Module):
         if self.act is not None:
             x = self.act(x)
         return x
-      
+
+
+class MaxPool(nn.Module):
+    def __init__(self, kernel_size, stride, padding=0, dilation=1):
+        super(MaxPool, self).__init__()
+        self.max_pool = nn.MaxPool2d(kernel_size=kernel_size, stride=stride,
+                                     padding=padding, dilation=dilation)
+
+    def forward(self, x):
+        return self.max_pool(x)
+        
