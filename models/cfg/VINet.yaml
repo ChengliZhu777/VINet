@@ -7,6 +7,7 @@ model:
       structure:
         [[-1, 1, Conv, [64, 3, 1, 1, 1, True, True, 'ReLU-inplace']],
          [-1, 1, MaxPool, [2, 2]],
-         [-1, 1, Conv, [128, 3, 1, 1, 1, True, True, 'ReLU-inplace']]
+         [-1, 1, Conv, [128, 3, 1, 1, 1, True, True, 'ReLU-inplace']],
+         [-1, 1, MaxPool, [2, 2]]
         ]
         
