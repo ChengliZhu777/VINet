@@ -43,3 +43,20 @@ class MaxPool(nn.Module):
     def forward(self, x):
         return self.max_pool(x)
         
+
+class ResBasicBlock(nn.Module):
+    def __init__(self, in_channels, out_channels, down_sample):
+        super(ResBasicBlock, self).__init__()
+        self.conv1 = Conv(in_channels, out_channels, kernel_size=3, stride=1, padding=1, bn=True)
+        self.conv2 = Conv(out_channels, out_channels, kernel_size=3, stride=1, padding=1, bn=True)
+        self.act, self.down_sample = nn.ReLU(inplace=True), down_sample
+
+    def forward(self, x):
+        residual = x
+        out = self.conv2(self.act(self.conv1(x)))
+        if self.down_sample is not None:
+            residual = self.down_sample(residual)
+
+        out += residual
+        return self.act(out)
+
