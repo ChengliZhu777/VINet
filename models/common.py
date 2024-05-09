@@ -60,3 +60,21 @@ class ResBasicBlock(nn.Module):
         out += residual
         return self.act(out)
 
+
+class ResBlock(nn.Module):
+    def __init__(self, in_channels, out_channels, num_blocks):
+        super(ResBlock, self).__init__()
+
+        ds_conv = Conv(in_channels, out_channels, kernel_size=3, stride=1, padding=1, bn=True) \
+            if in_channels != out_channels else None
+        top_block = ResBasicBlock(in_channels, out_channels, ds_conv)
+
+        blocks = [top_block]
+        for _ in range(1, num_blocks):
+            blocks.append(ResBasicBlock(out_channels, out_channels))
+
+        self.blocks = nn.Sequential(*blocks)
+
+    def forward(self, x):
+        return self.blocks(x)
+
