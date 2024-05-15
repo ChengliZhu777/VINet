@@ -1,4 +1,6 @@
 from .builder import build_model
-from .rtlstd import RTLSTD
-from .backbone.resnet import ResNet
-from .region_proposal import PatchRPN
+
+from .vinet import VINet
+from .backbone import VEBackbone
+from .module import RVIModule
+from .recognizer import TransformerRecognitionHead
