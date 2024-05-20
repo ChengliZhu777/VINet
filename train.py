@@ -67,6 +67,40 @@ def train(train_opts):
 
     model = nn.DataParallel(build_model(model_cfg['model']), device_ids=[0])
 
+    optimizer = torch.optim.Adadelta(model.parameters(), lr=hypers['learning_rate'], rho=0.9, weight_decay=1e-4)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=10, T_mult=1)
+
+    recognition_loss, reconstruction_loss = nn.CrossEntropyLoss().to(device), nn.MSELoss().to(device)
+    info_str = '{0:^11}{1:^12}{2:^18}{3:^36}{4:^12}'.format(
+        'Epoch', 'GPU Memory', 'LearningRate', 'Recognition/Reconstruction loss', 'Accuracy')
+
+    if train_opts.resume:
+        ckpt = torch.load(train_opts.weights, map_location=device)
+        model.load_state_dict(ckpt['model'])
+        optimizer.load_state_dict(ckpt['optimizer'])
+        scheduler.load_state_dict(ckpt['lr_schedule'])
+        start_epoch = ckpt['epoch'] + 1
+
+        restore_rng_state(ckpt['random_state'], ckpt['np_ran_state'],
+                          torch.from_numpy(ckpt['torch_state']).byte(),
+                          torch.from_numpy(ckpt['torch_cuda_state']).byte())
+        test_accuracy, best_accuracy = ckpt['best_accuracy']
+        logger.info(colorstr(f'Continue training from epoch {start_epoch} ...'))
+        del ckpt
+    else:
+        start_epoch, best_accuracy, test_accuracy = 0, 0.0, 0.0
+        logger.info(colorstr('Start training from scratch ...'))
+        results_writer.write(info_str + '\n')
+
+    logger.info(info_str)
+
+    for epoch in range(start_epoch, epochs):
+        
+        pbar = tqdm(enumerate(train_loader), total=epoch_iter, ncols=180)
+        
+        model.train()
+        optimizer.zero_grad()
+        
 
 if __name__ == '__main__':
     set_logging(-1)
