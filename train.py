@@ -95,11 +95,17 @@ def train(train_opts):
     logger.info(info_str)
 
     for epoch in range(start_epoch, epochs):
-        
-        pbar = tqdm(enumerate(train_loader), total=epoch_iter, ncols=180)
-        
+
         model.train()
         optimizer.zero_grad()
+
+        pbar = tqdm(enumerate(train_loader), total=epoch_iter, ncols=180)
+        mean_loss = torch.zeros(3, device=device)
+        for iter_index, (images, labels, labels_length, labels_ids, labels_ids_merge) in pbar:
+            images, labels_length, labels_ids, labels_ids_merge = \
+                images.to(device), labels_length.to(device), labels_ids.to(device), labels_ids_merge.to(device)
+
+            outputs = model(images, labels_length, labels_ids)
         
 
 if __name__ == '__main__':
