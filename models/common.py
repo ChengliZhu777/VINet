@@ -108,3 +108,26 @@ class PositionalEncoding(nn.Module):
 
         return self.dropout(x)
         
+
+class Concat(nn.Module):
+    def __init__(self, dimension=1):
+        super(Concat, self).__init__()
+        self.d = dimension
+
+    def forward(self, x):
+        return torch.cat(x, self.d)
+
+
+class MultiHeadAttention(nn.Module):
+    def __init__(self, embed_dim, num_heads, dropout=0.1, compress_attention=True):
+        super(MultiHeadAttention, self).__init__()
+
+        assert embed_dim % num_heads == 0, f'Error: embedding-dim must be multiple of num-heads.'
+        self.head_dim = embed_dim // num_heads
+        self.num_heads = num_heads
+        self.compress_attention = compress_attention
+
+        self.linear_layers = clones(nn.Linear(embed_dim, embed_dim), 4)
+        self.dropout = nn.Dropout(p=dropout)
+        self.compressor = nn.Linear(num_heads, 1)
+        
