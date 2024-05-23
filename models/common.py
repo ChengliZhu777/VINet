@@ -131,3 +131,12 @@ class MultiHeadAttention(nn.Module):
         self.dropout = nn.Dropout(p=dropout)
         self.compressor = nn.Linear(num_heads, 1)
         
+    def forward(self, query, key, value, mask=None):
+
+        batch_size = query.size(0)
+        if mask is not None:
+            mask = mask.unsqueeze(1)
+        query, key, value = [linear(x).view(batch_size, -1, self.num_heads, self.head_dim).transpose(1, 2)
+                             for linear, x in zip(self.linear_layers, (query, key, value))]
+        x, attn = attention(query, key, value, mask=mask, dropout=self.dropout)
+        
