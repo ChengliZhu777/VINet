@@ -1,5 +1,10 @@
-import torch.nn as nn
+import math
+import copy
+import torch
 
+import numpy as np
+import torch.nn as nn
+import torch.nn.functional as F
 
 def auto_padding(kernel_size, padding=None):
     if padding is None:
@@ -118,6 +123,20 @@ class Concat(nn.Module):
         return torch.cat(x, self.d)
 
 
+def attention(query, key, value, mask=None, dropout=None):
+    k_dim = query.size(-1)
+    scores = torch.matmul(query, key.transpose(-2, -1)) / math.sqrt(k_dim)
+    if mask is not None:
+        scores = scores.masked_fill(mask == 0, float('-inf'))
+
+    p_attn = scores.softmax(dim=-1)
+
+    if dropout is not None:
+        p_attn = dropout(p_attn)
+
+    return torch.matmul(p_attn, value), p_attn
+
+
 class MultiHeadAttention(nn.Module):
     def __init__(self, embed_dim, num_heads, dropout=0.1, compress_attention=True):
         super(MultiHeadAttention, self).__init__()
@@ -130,13 +149,22 @@ class MultiHeadAttention(nn.Module):
         self.linear_layers = clones(nn.Linear(embed_dim, embed_dim), 4)
         self.dropout = nn.Dropout(p=dropout)
         self.compressor = nn.Linear(num_heads, 1)
-        
+
     def forward(self, query, key, value, mask=None):
 
         batch_size = query.size(0)
         if mask is not None:
             mask = mask.unsqueeze(1)
+
         query, key, value = [linear(x).view(batch_size, -1, self.num_heads, self.head_dim).transpose(1, 2)
                              for linear, x in zip(self.linear_layers, (query, key, value))]
         x, attn = attention(query, key, value, mask=mask, dropout=self.dropout)
+        x = x.transpose(1, 2).contiguous().view(batch_size, -1, self.num_heads * self.head_dim)
+
+        if self.compress_attention:
+            attn = attn.permute(0, 2, 3, 1).contiguous()
+            attn = self.compressor(attn).permute(0, 3, 1, 2).contiguous()
+
+        return self.linear_layers[-1](x), attn
         
+
