@@ -168,3 +168,50 @@ class MultiHeadAttention(nn.Module):
         return self.linear_layers[-1](x), attn
         
 
+class PositionWiseFeedForward(nn.Module):
+    def __init__(self, d_model, d_ff, dropout=0.1):
+        super(PositionWiseFeedForward, self).__init__()
+        self.w_1 = nn.Linear(d_model, d_ff)
+        self.w_2 = nn.Linear(d_ff, d_model)
+        self.dropout = nn.Dropout(dropout)
+
+    def forward(self, x):
+        return self.w_2(self.dropout(F.relu(self.w_1(x))))
+
+
+def generate_subsequent_mask(size):
+    subsequent_mask = np.triu(np.ones((1, size, size)), k=1).astype('uint8')  # 上三角矩阵
+    return torch.from_numpy(subsequent_mask) == 0
+
+
+class RecHead(nn.Module):
+    def __init__(self, d_model, num_chars):
+        super(RecHead, self).__init__()
+        self.masked_multi_head = MultiHeadAttention(embed_dim=d_model, num_heads=4, dropout=0.1)
+        self.norm1 = LayerNorm(d_model=d_model)
+
+        self.multi_head = MultiHeadAttention(embed_dim=d_model, num_heads=4, dropout=0.1,
+                                             compress_attention=True)
+        self.norm2 = LayerNorm(d_model=d_model)
+
+        self.pff = PositionWiseFeedForward(d_model, d_model * 2)
+        self.norm3 = LayerNorm(d_model=d_model)
+
+        self.fc = nn.Linear(512, num_chars)
+
+    def forward(self, label_embeddings, conv_feature):
+        label_mask = generate_subsequent_mask(label_embeddings.shape[1]).to(label_embeddings.device)
+
+        out = self.norm1(label_embeddings + self.masked_multi_head(label_embeddings, label_embeddings,
+                                                                   label_embeddings, mask=label_mask)[0])
+
+        batch_size, num_channel, feature_height, feature_width = conv_feature.shape
+        conv_feature = conv_feature.view(batch_size, num_channel,
+                                         feature_height * feature_width).permute(0, 2, 1).contiguous()
+
+        feature_out, attention_map = self.multi_head(out, conv_feature, conv_feature)
+        out = self.norm2(out + feature_out)
+        out = self.norm3(out + self.pff(out))
+
+        return self.fc(out), attention_map
+
